@@ -13,6 +13,8 @@ import javax.persistence.Id;
 
 import ren.eggpain.axon.coreapi.AccountCreatedEvent;
 import ren.eggpain.axon.coreapi.CreateAccountCommand;
+import ren.eggpain.axon.coreapi.DepositMoneyCommand;
+import ren.eggpain.axon.coreapi.MoneyDepositedEvent;
 import ren.eggpain.axon.coreapi.MoneyWithdrawnEvent;
 import ren.eggpain.axon.coreapi.WithdrawMoneyCommand;
 
@@ -38,11 +40,19 @@ public class Account {
 
   @CommandHandler
   public void handle(WithdrawMoneyCommand command) {
-    if (balance + overdraftLimit >= command.getAmount()) {
-      apply(new MoneyWithdrawnEvent(accountId, command.getAmount(), balance - command.getAmount()));
-    } else {
+    if (balance + overdraftLimit < command.getAmount()) {
       throw new OverdraftLimitException();
     }
+    apply(new MoneyWithdrawnEvent(accountId, command.getAmount(), balance - command.getAmount()));
+  }
+
+  @CommandHandler
+  public void handle(DepositMoneyCommand command) {
+    if (command.getAmount() <= 0) {
+      throw new IllegalArgumentException();
+    }
+    apply(new MoneyDepositedEvent(accountId, command.getAmount(), balance + command.getAmount()));
+
   }
 
   @EventSourcingHandler
@@ -53,6 +63,11 @@ public class Account {
 
   @EventSourcingHandler
   public void on(MoneyWithdrawnEvent event) {
+    this.balance = event.getBalance();
+  }
+
+  @EventSourcingHandler
+  public void on(MoneyDepositedEvent event) {
     this.balance = event.getBalance();
   }
 }

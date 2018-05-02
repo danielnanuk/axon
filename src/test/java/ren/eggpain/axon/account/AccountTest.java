@@ -6,11 +6,13 @@ import org.junit.Test;
 
 import ren.eggpain.axon.coreapi.AccountCreatedEvent;
 import ren.eggpain.axon.coreapi.CreateAccountCommand;
+import ren.eggpain.axon.coreapi.DepositMoneyCommand;
+import ren.eggpain.axon.coreapi.MoneyDepositedEvent;
 import ren.eggpain.axon.coreapi.MoneyWithdrawnEvent;
 import ren.eggpain.axon.coreapi.WithdrawMoneyCommand;
 
 public class AccountTest {
-  private AggregateTestFixture fixture;
+  private AggregateTestFixture<Account> fixture;
 
   @Before
   public void setUp() throws Exception {
@@ -48,4 +50,20 @@ public class AccountTest {
         .expectNoEvents()
         .expectException(OverdraftLimitException.class);
   }
+
+  @Test
+  public void testDepositReasonableAmount() {
+    fixture.given(new AccountCreatedEvent("1234", 1000))
+        .when(new DepositMoneyCommand("1234", 500))
+        .expectEvents(new MoneyDepositedEvent("1234", 500, 500));
+  }
+
+  @Test
+  public void testDepositAbsurdAmount() {
+    fixture.given(new AccountCreatedEvent("1234", 1000))
+        .when(new DepositMoneyCommand("1234", -500))
+        .expectNoEvents()
+        .expectException(IllegalArgumentException.class);
+  }
+
 }
