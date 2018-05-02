@@ -18,13 +18,13 @@
 + @EventSourcingHandler
 + apply()
 
-### Test Fixtures
+## Test Fixtures
 
 + Given... when... then...
 + Check for published events
 + Check for exceptions
 
-### Configuration API
+## Configuration API
 
 + Pure Java: Configurer
 + Spring: @EnableAxon
